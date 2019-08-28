@@ -385,9 +385,6 @@ func (t *Tree) Find(needle Item) *Node {
 		// If the needle is not less than, it could be equal to our
 		// node. We recurse right, saving what could be equal.
 		if needle.Less(on.Item) {
-			if on.left != nil {
-				lastLarger = nil
-			}
 			on = on.left
 		} else {
 			lastLarger = on

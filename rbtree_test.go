@@ -43,6 +43,24 @@ func TestRandom(t *testing.T) {
 	}
 }
 
+func TestFind(t *testing.T) {
+	var r Tree
+	for i := 0; i < 20; i++ {
+		r.Insert(myInt(i))
+	}
+	for i := 20 - 1; i >= 0; i-- {
+		max := r.Max()
+		if max == nil || max.Item.(myInt) != myInt(i) {
+			t.Fatal("could not get max")
+		}
+		found := r.Find(max.Item.(myInt))
+		if found == nil {
+			t.Fatal("could not find max")
+		}
+		r.Delete(found)
+	}
+}
+
 type intPtr int
 
 func (l *intPtr) Less(r Item) bool {
