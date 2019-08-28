@@ -124,13 +124,17 @@ func (n *Node) isBlack() bool {
 // a node after the item has been updated, removing some minor garbage.
 //
 // This is shorthand for t.Reinsert(t.Delete(n)).
-func (t *Tree) Fix(n *Node) {
-	t.Reinsert(t.Delete(n))
+func (t *Tree) Fix(n *Node) *Node {
+	r := t.Delete(n)
+	t.Reinsert(r)
+	return r
 }
 
 // Insert inserts an item into the tree.
-func (t *Tree) Insert(i Item) {
-	t.Reinsert(&Node{Item: i})
+func (t *Tree) Insert(i Item) *Node {
+	r := &Node{Item: i}
+	t.Reinsert(r)
+	return r
 }
 
 // Reinsert inserts a node into the tree.
@@ -404,15 +408,15 @@ func (t *Tree) Find(needle Item) *Node {
 // Len returns the current size of the tree.
 func (t *Tree) Len() int { return t.size }
 
-// BeforeMin returns a fake node that, on the right, contains the minimum node.
+// Before returns a fake node that, on the right, will be the given node.
 // This can be used in combination with iterating to reset iteration to the
-// minimum node.
-func (t *Tree) BeforeMin() *Node { return &Node{right: t.Min()} }
+// given node.
+func (t *Tree) Before(n *Node) *Node { return &Node{right: n} }
 
-// AfterMax returns a fake node that, on the left, contains the maximum node.
+// After returns a fake node that, on the left, will be the given node.
 // This can be used in combination with iterating to reset iteration to the
-// maximum node.
-func (t *Tree) AfterMax() *Node { return &Node{left: t.Max()} }
+// given node.
+func (t *Tree) After(n *Node) *Node { return &Node{left: n} }
 
 // Min returns the minimum node in the tree, or nil if empty.
 func (t *Tree) Min() *Node {
