@@ -405,6 +405,29 @@ func (t *Tree) Find(needle Item) *Node {
 	return nil
 }
 
+// FindFn calls cmp to find a node in the tree. To continue searching left, cmp
+// must return negative. To continue searching right, cmp must return positive.
+// To stop at the node containing the current item to cmp, return zero.
+//
+// If cmp never returns zero, this returns nil.
+//
+// This can be used to find an arbitrary node meeting a condition.
+func (t *Tree) FindFn(cmp func(Item) int) *Node {
+	on := t.root
+	for on != nil {
+		way := cmp(on.Item)
+		switch {
+		case way < 0:
+			on = on.left
+		case way == 0:
+			return on
+		case way > 0:
+			on = on.right
+		}
+	}
+	return nil
+}
+
 // Len returns the current size of the tree.
 func (t *Tree) Len() int { return t.size }
 
