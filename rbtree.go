@@ -122,6 +122,7 @@ func (n *Node) isBlack() bool {
 
 // Fix removes a node from the tree and reinserts it. This can be used to "fix"
 // a node after the item has been updated, removing some minor garbage.
+// This returns the updated node.
 //
 // This is shorthand for t.Reinsert(t.Delete(n)).
 func (t *Tree) Fix(n *Node) *Node {
@@ -130,7 +131,7 @@ func (t *Tree) Fix(n *Node) *Node {
 	return r
 }
 
-// Insert inserts an item into the tree.
+// Insert inserts an item into the tree, returning the new node.
 func (t *Tree) Insert(i Item) *Node {
 	r := &Node{Item: i}
 	t.Reinsert(r)
@@ -412,10 +413,10 @@ func (t *Tree) Find(needle Item) *Node {
 // If cmp never returns zero, this returns nil.
 //
 // This can be used to find an arbitrary node meeting a condition.
-func (t *Tree) FindFn(cmp func(Item) int) *Node {
+func (t *Tree) FindFn(cmp func(*Node) int) *Node {
 	on := t.root
 	for on != nil {
-		way := cmp(on.Item)
+		way := cmp(on)
 		switch {
 		case way < 0:
 			on = on.left

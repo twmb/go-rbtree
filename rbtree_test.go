@@ -71,18 +71,18 @@ func TestFindFn(t *testing.T) {
 		r.Insert(myInt(i))
 	}
 	for i := 0; i < 20; i++ {
-		n := r.FindFn(func(item Item) int {
-			v := int(item.(myInt))
+		n := r.FindFn(func(n *Node) int {
+			v := int(n.Item.(myInt))
 			return i - v
 		})
 		if n == nil || n.Item.(myInt) != myInt(i) {
 			t.Fatalf("did not find %v", i)
 		}
 	}
-	if r.FindFn(func(Item) int { return -1 }) != nil {
+	if r.FindFn(func(*Node) int { return -1 }) != nil {
 		t.Error("found item when always left")
 	}
-	if r.FindFn(func(Item) int { return 1 }) != nil {
+	if r.FindFn(func(*Node) int { return 1 }) != nil {
 		t.Error("found item when always right")
 	}
 }
