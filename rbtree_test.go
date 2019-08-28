@@ -137,14 +137,14 @@ func TestIter(t *testing.T) {
 	r.Insert(myInt(9))
 	const end = 10
 
-	iter := IterAt(r.Before(r.Min()))
+	iter := IterAt(Before(r.Min()))
 	for exp := 0; exp < end; exp++ {
 		if got := iter.Right().Item.(myInt); got != myInt(exp) {
 			t.Errorf("got %d != exp %d", got, exp)
 		}
 	}
 
-	iter.Reset(r.After(r.Max()))
+	iter.Reset(After(r.Max()))
 	for exp := end - 1; exp >= 0; exp-- {
 		if got := iter.Left().Item.(myInt); got != myInt(exp) {
 			t.Errorf("got %d != exp %d", got, exp)
@@ -175,7 +175,7 @@ func TestIter(t *testing.T) {
 		exp++
 	}
 
-	iter.Reset(r.After(r.Max()))
+	iter.Reset(After(r.Max()))
 	peek, left := iter.PeekLeft(), iter.Left()
 	if peek.Item != left.Item {
 		t.Error("destructive peek left")
@@ -184,7 +184,7 @@ func TestIter(t *testing.T) {
 		t.Errorf("got bad peek left from max %d", peek.Item)
 	}
 
-	iter.Reset(r.Before(r.Min()))
+	iter.Reset(Before(r.Min()))
 	peek, right := iter.PeekRight(), iter.Right()
 	if peek.Item != right.Item {
 		t.Error("destructive peek right")

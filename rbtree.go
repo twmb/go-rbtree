@@ -435,12 +435,12 @@ func (t *Tree) Len() int { return t.size }
 // Before returns a fake node that, on the right, will be the given node.
 // This can be used in combination with iterating to reset iteration to the
 // given node.
-func (t *Tree) Before(n *Node) *Node { return &Node{right: n} }
+func Before(n *Node) *Node { return &Node{right: n} }
 
 // After returns a fake node that, on the left, will be the given node.
 // This can be used in combination with iterating to reset iteration to the
 // given node.
-func (t *Tree) After(n *Node) *Node { return &Node{left: n} }
+func After(n *Node) *Node { return &Node{left: n} }
 
 // Min returns the minimum node in the tree, or nil if empty.
 func (t *Tree) Min() *Node {
