@@ -65,13 +65,13 @@ func TestFind(t *testing.T) {
 	}
 }
 
-func TestFindFn(t *testing.T) {
+func TestFindWith(t *testing.T) {
 	var r Tree
 	for i := 0; i < 20; i++ {
 		r.Insert(myInt(i))
 	}
 	for i := 0; i < 20; i++ {
-		n := r.FindFn(func(n *Node) int {
+		n := r.FindWith(func(n *Node) int {
 			v := int(n.Item.(myInt))
 			return i - v
 		})
@@ -79,11 +79,58 @@ func TestFindFn(t *testing.T) {
 			t.Fatalf("did not find %v", i)
 		}
 	}
-	if r.FindFn(func(*Node) int { return -1 }) != nil {
+	if r.FindWith(func(*Node) int { return -1 }) != nil {
 		t.Error("found item when always left")
 	}
-	if r.FindFn(func(*Node) int { return 1 }) != nil {
+	if r.FindWith(func(*Node) int { return 1 }) != nil {
 		t.Error("found item when always right")
+	}
+}
+
+func TestFindOrInsert(t *testing.T) {
+	var r Tree
+	for i := 0; i < 20; i++ {
+		for j := 0; j < 10; j++ {
+			node := r.FindOrInsert(myInt(i))
+			if got := int(node.Item.(myInt)); got != i {
+				t.Errorf("got insert %d != exp %d", got, i)
+			}
+		}
+	}
+	if got := r.Len(); got != 20 {
+		t.Errorf("got len %d != exp %d", got, 20)
+	}
+	i := 0
+	for it := IterAt(r.Min()); it.Ok(); it.Right() {
+		if got := it.Item().(myInt); got != myInt(i) {
+			t.Errorf("got %d != exp %d", got, i)
+		}
+		i++
+	}
+}
+
+func TestFindWithOrInsertWith(t *testing.T) {
+	var r Tree
+	for i := 0; i < 20; i++ {
+		for j := 0; j < 10; j++ {
+			node := r.FindWithOrInsertWith(
+				func(n *Node) int { return i - int(n.Item.(myInt)) },
+				func() Item { return myInt(i) },
+			)
+			if got := int(node.Item.(myInt)); got != i {
+				t.Errorf("got insert %d, exp %d", got, i)
+			}
+		}
+	}
+	if got := r.Len(); got != 20 {
+		t.Errorf("got len %d != exp %d", got, 20)
+	}
+	i := 0
+	for it := IterAt(r.Min()); it.Ok(); it.Right() {
+		if got := it.Item().(myInt); got != myInt(i) {
+			t.Errorf("got %d != exp %d", got, i)
+		}
+		i++
 	}
 }
 
@@ -93,12 +140,12 @@ func (l *intPtr) Less(r Item) bool {
 	return *l < *r.(*intPtr)
 }
 
-func TestFix(t *testing.T) {
-	newIntPtr := func(v int) *intPtr {
-		i := intPtr(v)
-		return &i
-	}
+func newIntPtr(v int) *intPtr {
+	i := intPtr(v)
+	return &i
+}
 
+func TestFix(t *testing.T) {
 	var r Tree
 	r.Insert(newIntPtr(1))
 	r.Insert(newIntPtr(2))
@@ -137,14 +184,14 @@ func TestIter(t *testing.T) {
 	r.Insert(myInt(9))
 	const end = 10
 
-	iter := IterAt(Before(r.Min()))
+	iter := IterAt(Into(r.Min()))
 	for exp := 0; exp < end; exp++ {
 		if got := iter.Right().Item.(myInt); got != myInt(exp) {
 			t.Errorf("got %d != exp %d", got, exp)
 		}
 	}
 
-	iter.Reset(After(r.Max()))
+	iter.Reset(Into(r.Max()))
 	for exp := end - 1; exp >= 0; exp-- {
 		if got := iter.Left().Item.(myInt); got != myInt(exp) {
 			t.Errorf("got %d != exp %d", got, exp)
@@ -175,7 +222,7 @@ func TestIter(t *testing.T) {
 		exp++
 	}
 
-	iter.Reset(After(r.Max()))
+	iter.Reset(Into(r.Max()))
 	peek, left := iter.PeekLeft(), iter.Left()
 	if peek.Item != left.Item {
 		t.Error("destructive peek left")
@@ -184,7 +231,7 @@ func TestIter(t *testing.T) {
 		t.Errorf("got bad peek left from max %d", peek.Item)
 	}
 
-	iter.Reset(Before(r.Min()))
+	iter.Reset(Into(r.Min()))
 	peek, right := iter.PeekRight(), iter.Right()
 	if peek.Item != right.Item {
 		t.Error("destructive peek right")
@@ -210,4 +257,44 @@ func BenchmarkInsertCase4(b *testing.B) {
 			r.Insert(myInt(3))
 		}
 	})
+}
+
+func BenchmarkFindWithOrInsertWithExisting(b *testing.B) {
+	var r Tree
+	r.Insert(myInt(1))
+	for i := 0; i < b.N; i++ {
+		r.FindWithOrInsertWith(
+			func(n *Node) int { return 1 - int(n.Item.(myInt)) },
+			func() Item { return myInt(1) },
+		)
+	}
+}
+
+func findNum(num int) func(*Node) int {
+	return func(n *Node) int { return num - int(n.Item.(myInt)) }
+}
+
+func newNum(num int) func() Item {
+	return func() Item { return myInt(num) }
+}
+
+func BenchmarkFindWithOrInsertWithExistingClosure(b *testing.B) {
+	var r Tree
+	r.Insert(myInt(1))
+	for i := 0; i < b.N; i++ {
+		r.FindWithOrInsertWith(
+			findNum(1),
+			newNum(1),
+		)
+	}
+}
+
+func BenchmarkFindWithOrInsertWithNew(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var r Tree
+		r.FindWithOrInsertWith(
+			func(n *Node) int { return 1 - int(n.Item.(myInt)) },
+			func() Item { return myInt(1) },
+		)
+	}
 }

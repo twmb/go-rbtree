@@ -1,10 +1,10 @@
 // Package rbtree provides an iterative (not recursive) red-black tree with
 // obvious semantics and powerful, resettable iteration.
 //
-// This package was born out of a need to modify elements during tree
-// iteration. Most packages do not provide an obvious way to efficiently
-// "reset" a node or an iterator. To aid in this need, this package primarily
-// operates on the basis of nodes rather than node items.
+// This package provides the easy ability to modify nodes on the fly, but note
+// that this comes with the easy footgun of messing up iteration. If you modify
+// a tree during iteration, you will likely need to reset your iterator. The
+// node under the iterator may no longer be where you expect.
 //
 // For more information about a red-black tree, and to understand the
 // implementation, see Wikipedia:
@@ -406,14 +406,25 @@ func (t *Tree) Find(needle Item) *Node {
 	return nil
 }
 
-// FindFn calls cmp to find a node in the tree. To continue searching left, cmp
-// must return negative. To continue searching right, cmp must return positive.
-// To stop at the node containing the current item to cmp, return zero.
+// FindOrInsert finds a node equal to the needle, if any. If the node does not
+// exist, this inserts a new node into the tree with new and returns that node.
+func (t *Tree) FindOrInsert(needle Item) *Node {
+	found := t.Find(needle)
+	if found == nil {
+		return t.Insert(needle)
+	}
+	return found
+}
+
+// FindWith calls cmp to find a node in the tree. To continue searching left,
+// cmp must return negative. To continue searching right, cmp must return
+// positive. To stop at the node containing the current item to cmp, return
+// zero.
 //
 // If cmp never returns zero, this returns nil.
 //
 // This can be used to find an arbitrary node meeting a condition.
-func (t *Tree) FindFn(cmp func(*Node) int) *Node {
+func (t *Tree) FindWith(cmp func(*Node) int) *Node {
 	on := t.root
 	for on != nil {
 		way := cmp(on)
@@ -429,18 +440,27 @@ func (t *Tree) FindFn(cmp func(*Node) int) *Node {
 	return nil
 }
 
+// FindWithOrInsertWith calls cmp to find a node in the tree following the
+// semantics described in FindWith. If the cmp function never returns zero,
+// this inserts a new node into the tree with new and returns that node.
+func (t *Tree) FindWithOrInsertWith(
+	find func(*Node) int,
+	insert func() Item,
+) *Node {
+	found := t.FindWith(find)
+	if found == nil {
+		return t.Insert(insert())
+	}
+	return found
+}
+
 // Len returns the current size of the tree.
 func (t *Tree) Len() int { return t.size }
 
-// Before returns a fake node that, on the right, will be the given node.
-// This can be used in combination with iterating to reset iteration to the
-// given node.
-func Before(n *Node) *Node { return &Node{right: n} }
-
-// After returns a fake node that, on the left, will be the given node.
-// This can be used in combination with iterating to reset iteration to the
-// given node.
-func After(n *Node) *Node { return &Node{left: n} }
+// Into returns a fake node that to both the Left or the Right will be the
+// given node. This can be used in combination with iterating to reset
+// iteration to the given node.
+func Into(n *Node) *Node { return &Node{parent: n} }
 
 // Min returns the minimum node in the tree, or nil if empty.
 func (t *Tree) Min() *Node {
@@ -475,13 +495,16 @@ func (on *Node) max() *Node {
 // IterAt returns an iterator for a tree starting on the given node.
 //
 // Note that modifications to the tree during iteration may invalidate the
-// iterator and the iterator will need resetting.
+// iterator and the iterator may need resetting.
 func IterAt(on *Node) Iter {
 	return Iter{on}
 }
 
 // Iter iterates over a tree. This returns nodes in the tree to support easy
 // node deletion.
+//
+// Note that if you modify the tree during iteration, you need to reset the
+// iterator or stop iterating.
 type Iter struct {
 	on *Node
 }

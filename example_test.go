@@ -30,7 +30,7 @@ func ExampleIter() {
 
 	// Or, we can start iterating just before the min so that
 	// our first call to Right will start at the min.
-	iter.Reset(rbtree.Before(r.Min()))
+	iter.Reset(rbtree.Into(r.Min()))
 	fmt.Println("iterating up...")
 	for {
 		next := iter.Right()
@@ -46,7 +46,7 @@ func ExampleIter() {
 		if it.Item() == r.Max().Item {
 			fmt.Println(it.Item())
 			r.Delete(it.Node())
-			it.Reset(rbtree.Before(r.Min()))
+			it.Reset(rbtree.Into(r.Min()))
 		}
 	}
 
